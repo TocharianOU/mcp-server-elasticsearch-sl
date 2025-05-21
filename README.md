@@ -62,9 +62,9 @@ The Elasticsearch MCP Server supports the following configuration options:
    cd mcp-server-elasticsearch
    ```
 
-2. **Use the correct Node.js version**
+2. **Visit folder**
    ```bash
-   nvm use
+   cd mcp-server-elasticsearch
    ```
 
 3. **Install Dependencies**
