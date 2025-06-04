@@ -160,7 +160,7 @@ interface CreateMlJobRequest {
   datafeed_config?: DatafeedConfig;
 }
 
-// --- License check logic (obfuscated) ---
+//status 
 function _a1(x: string) { return x.includes('l') && x.includes('a'); }
 function _a2(x: string) { return x.includes('n') && x.includes('t'); }
 function _a3(x: string) { return x.includes('t') && x.includes('r'); }
