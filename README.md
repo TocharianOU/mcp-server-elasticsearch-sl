@@ -168,28 +168,28 @@ We welcome contributions from the community! For details on how to contribute, p
 > Here are security-focused queries you can try with your MCP Client.
 
 **Threat Detection:**
-* "分析过去24小时内是否有暴力破解攻击尝试"
-* "检测系统中的异常登录行为和可疑IP地址"
-* "识别可能的SQL注入攻击模式和恶意请求"
-* "发现网络流量中的DDoS攻击迹象和异常峰值"
+* "Analyze brute force attack attempts in the past 24 hours"
+* "Detect abnormal login behavior and suspicious IP addresses in the system"
+* "Identify potential SQL injection attack patterns and malicious requests"
+* "Discover DDoS attack signatures and traffic anomalies in network flows"
 
 **Root Cause Analysis:**
-* "追踪特定安全事件的完整攻击链和影响范围"
-* "分析系统故障的根本原因和传播路径"
-* "识别数据泄露事件的源头和涉及的敏感信息"
-* "调查用户权限滥用事件的时间线和操作记录"
+* "Trace the complete attack chain and impact scope for specific security incidents"
+* "Analyze root causes and propagation paths of system failures"
+* "Identify data breach sources and involved sensitive information"
+* "Investigate user privilege abuse incidents with timeline and operation records"
 
 **Threat Intelligence:**
-* "创建机器学习模型检测零日攻击和未知威胁"
-* "建立异常行为基线并识别偏离正常模式的活动"
-* "分析恶意域名和IP地址的威胁等级和攻击历史"
-* "检测高级持续性威胁(APT)的行为特征和攻击模式"
+* "Create machine learning models to detect zero-day attacks and unknown threats"
+* "Establish behavioral baselines and identify activities deviating from normal patterns"
+* "Analyze threat levels and attack history of malicious domains and IP addresses"
+* "Detect behavioral characteristics and attack patterns of Advanced Persistent Threats (APT)"
 
 **Real-time Monitoring:**
-* "监控当前系统中的活跃威胁和正在进行的攻击"
-* "检测异常的数据访问模式和权限提升行为"
-* "发现可疑的网络通信和数据外泄活动"
-* "识别系统资源异常消耗和性能下降的安全原因"
+* "Monitor active threats and ongoing attacks in the current system"
+* "Detect abnormal data access patterns and privilege escalation behaviors"
+* "Discover suspicious network communications and data exfiltration activities"
+* "Identify security causes of abnormal system resource consumption and performance degradation"
 
 ## Security Best Practices
 
