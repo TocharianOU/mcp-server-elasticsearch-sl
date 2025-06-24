@@ -1,0 +1,42 @@
+# Source files
+*.ts
+!*.d.ts
+tsconfig.json
+
+# Development files
+.git/
+.github/
+.buildkite/
+docs/
+scripts/
+renovate.json
+catalog-info.yaml
+.nvmrc
+
+# Environment files
+.env*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+
+# Development dependencies
+node_modules/
+
+# TypeScript build info
+*.tsbuildinfo 

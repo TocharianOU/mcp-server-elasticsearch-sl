@@ -1,18 +1,23 @@
 {
-  "name": "@elastic/mcp-server-elasticsearch",
-  "description": "Elasticsearch MCP Server",
+  "name": "mcp-server-elasticsearch-enhanced",
+  "description": "Enhanced Elasticsearch MCP Server with full API support",
   "version": "0.1.2",
   "license": "Apache-2.0",
-  "author": "Elastic",
+  "author": "TocharianOU <tocharian139@protonmail.com>",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "bin": {
     "mcp-server-elasticsearch": "./dist/index.js"
   },
-  "repository": "https://github.com/elastic/mcp-server-elasticsearch",
-  "bugs": "https://github.com/elastic/mcp-server-elasticsearch/issues",
-  "homepage": "https://github.com/elastic/mcp-server-elasticsearch",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TocharianOU/mcp-server-elasticsearch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TocharianOU/mcp-server-elasticsearch/issues"
+  },
+  "homepage": "https://github.com/TocharianOU/mcp-server-elasticsearch#readme",
   "keywords": [
     "elasticsearch",
     "search",
@@ -28,11 +33,12 @@
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",
     "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run license-checker",
     "watch": "tsc --watch",
     "start": "node dist/index.js",
     "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test": "npm run build",
-    "license-checker": "license-checker --production --onlyAllow='MIT;Apache-2.0;Apache1.1;ISC;BSD-3-Clause;BSD-2-Clause;0BSD'",
+    "license-checker": "license-checker --production --onlyAllow='MIT;Apache-2.0;Apache1.1;ISC;BSD-3-Clause;BSD-2-Clause;0BSD;BlueOak-1.0.0;Unlicense'",
     "license-header": "./scripts/check-spdx",
     "generate-notice": "node ./scripts/generate-notice.js"
   },
