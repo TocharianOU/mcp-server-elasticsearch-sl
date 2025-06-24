@@ -215,7 +215,7 @@ export async function createElasticsearchMcpServer(
   await _hiddenCheck(esClient);
 
   const server = new McpServer({
-    name: "elasticsearch-mcp-server",
+    name: "elasticsearch-mcp-server-js",
     version: "0.1.5",
   });
 
