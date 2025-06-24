@@ -1,5 +1,3 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/tocharianou-mcp-server-elasticsearch-sl-badge.png)](https://mseep.ai/app/tocharianou-mcp-server-elasticsearch-sl)
-
 # Elasticsearch MCP Server Solution
 [![npm version](https://badge.fury.io/js/@tocharian%2Fmcp-server-elasticsearch-sl.svg)](https://www.npmjs.com/package/@tocharian/mcp-server-elasticsearch-sl)
 [![Downloads](https://img.shields.io/npm/dm/@tocharian/mcp-server-elasticsearch-sl.svg)](https://www.npmjs.com/package/@tocharian/mcp-server-elasticsearch-sl)
@@ -22,9 +20,6 @@ This is a professional security-focused solution maintained by TocharianOU. It e
 
 Connect to your Elasticsearch data directly from any MCP Client (such as Claude Desktop) using the Model Context Protocol (MCP). Interact with your Elasticsearch security data through natural language queries for advanced threat analysis and incident response.
 
-<a href="https://glama.ai/mcp/servers/@tocharian/mcp-server-elasticsearch-sl">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@tocharian/mcp-server-elasticsearch-sl/badge" alt="Elasticsearch Security MCP server" />
-</a>
 
 ## Prerequisites
 
