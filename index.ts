@@ -216,7 +216,7 @@ export async function createElasticsearchMcpServer(
 
   const server = new McpServer({
     name: "elasticsearch-mcp-server-js",
-    version: "0.1.6",
+    version: "0.2.0",
   });
 
   // Tool 1: List indices
@@ -322,7 +322,7 @@ export async function createElasticsearchMcpServer(
 
   // Tool 3: Search an index with simplified parameters
   server.tool(
-    "search",
+    "es_search",
     "Perform an Elasticsearch search with the provided query DSL. Highlights are always enabled.",
     {
       index: z
