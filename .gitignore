@@ -10,6 +10,7 @@ node_modules
 .env.production.local
 .env.development
 .env.test
+start-http.sh
 
 # Logs
 npm-debug.log*

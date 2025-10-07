@@ -24,9 +24,9 @@ Connect to your Elasticsearch data directly from any MCP Client (such as Claude 
 ## Prerequisites
 
 * An Elasticsearch instance
-* **A valid Elasticsearch license (trial, platinum, enterprice.) is required.**
+* **A valid Elasticsearch license (trial, platinum, enterprise) is required.**
 * Elasticsearch authentication credentials (API key or username/password)
-* MCP Client (e.g. Claude Desktop)
+* MCP Client (e.g. Claude Desktop) or HTTP client for remote access
 
 > ⚠️ This project requires your Elasticsearch cluster to have a valid license. If you do not have a license, you can activate a trial license as shown below.
 
@@ -52,6 +52,8 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 
 The Elasticsearch MCP Server supports the following configuration options:
 
+#### Elasticsearch Configuration
+
 | Environment Variable           | Description                                              | Required |
 |-------------------------------|----------------------------------------------------------|----------|
 | `ES_URL`                      | Your Elasticsearch instance URL                          | Yes      |
@@ -60,6 +62,18 @@ The Elasticsearch MCP Server supports the following configuration options:
 | `ES_PASSWORD`                 | Elasticsearch password for basic authentication          | No       |
 | `ES_CA_CERT`                  | Path to custom CA certificate for Elasticsearch SSL/TLS  | No       |
 | `NODE_TLS_REJECT_UNAUTHORIZED`| Set to `0` to disable SSL certificate validation         | No       |
+
+#### Transport Mode Configuration (NEW in v0.3.0)
+
+| Environment Variable | Description                                      | Default   | Values          |
+|---------------------|--------------------------------------------------|-----------|-----------------|
+| `MCP_TRANSPORT`     | Transport mode selection                         | `stdio`   | `stdio`, `http` |
+| `MCP_HTTP_PORT`     | HTTP server port (when using HTTP transport)     | `3000`    | 1-65535         |
+| `MCP_HTTP_HOST`     | HTTP server host (when using HTTP transport)     | `localhost` | Any valid host  |
+
+**Transport Mode Details:**
+- **Stdio mode** (default): For Claude Desktop and local MCP clients
+- **HTTP Streamable mode**: Runs as a standalone HTTP server for remote access, API integration, and web applications
 
 ### Quick Start
 
@@ -151,6 +165,89 @@ The Elasticsearch MCP Server supports the following configuration options:
 
    🔍 MCP Inspector is up and running at http://localhost:5173 🚀
    ```
+
+### Method 3: HTTP Streamable Mode (NEW in v0.3.0)
+
+Run the server as a standalone HTTP service for remote access and API integration:
+
+```bash
+# Start HTTP server (default port 3000)
+MCP_TRANSPORT=http \
+ES_URL=your-elasticsearch-url \
+ES_USERNAME=elastic \
+ES_PASSWORD=your_pass \
+npx @tocharian/mcp-server-elasticsearch-sl
+
+# Or with custom port and host
+MCP_TRANSPORT=http \
+MCP_HTTP_PORT=9000 \
+MCP_HTTP_HOST=0.0.0.0 \
+ES_URL=your-elasticsearch-url \
+ES_USERNAME=elastic \
+ES_PASSWORD=your_pass \
+npx @tocharian/mcp-server-elasticsearch-sl
+```
+
+**HTTP Streamable Mode Features:**
+- Exposes MCP server at `http://host:port/mcp` endpoint
+- Health check available at `http://host:port/health`
+- Session-based connection management
+- Supports both POST (JSON-RPC requests) and GET (SSE streams)
+- Compatible with any HTTP client or MCP SDK
+
+**Example HTTP client usage:**
+```javascript
+// Initialize connection
+const response = await fetch('http://localhost:3000/mcp', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    method: 'initialize',
+    params: {
+      protocolVersion: '2024-11-05',
+      capabilities: {},
+      clientInfo: { name: 'my-client', version: '1.0.0' }
+    },
+    id: 1
+  })
+});
+
+const sessionId = response.headers.get('mcp-session-id');
+
+// Subsequent requests include session ID
+const toolsResponse = await fetch('http://localhost:3000/mcp', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'mcp-session-id': sessionId
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    method: 'tools/list',
+    params: {},
+    id: 2
+  })
+});
+
+// Call a tool (e.g., list_indices)
+const indicesResponse = await fetch('http://localhost:3000/mcp', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'mcp-session-id': sessionId
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    method: 'tools/call',
+    params: {
+      name: 'list_indices',
+      arguments: {}
+    },
+    id: 3
+  })
+});
+```
 
 ## Contributing
 

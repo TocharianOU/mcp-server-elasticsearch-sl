@@ -1,7 +1,7 @@
 {
   "name": "@tocharian/mcp-server-elasticsearch-sl",
   "description": "Enhanced Elasticsearch MCP Server with full API support",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
   "type": "module",
@@ -36,6 +36,7 @@
     "prepublishOnly": "npm run build && npm run license-checker",
     "watch": "tsc --watch",
     "start": "node dist/index.js",
+    "start:http": "MCP_TRANSPORT=http node dist/index.js",
     "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test": "npm run build",
     "license-checker": "license-checker --production --onlyAllow='MIT;Apache-2.0;Apache1.1;ISC;BSD-3-Clause;BSD-2-Clause;0BSD;BlueOak-1.0.0;Unlicense'",
@@ -44,7 +45,9 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
-    "@modelcontextprotocol/sdk": "1.8.0",
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@types/express": "^5.0.3",
+    "express": "^5.1.0",
     "mcp-ssh": "^1.0.1",
     "server-cmd": "^2.0.1"
   },
