@@ -163,21 +163,6 @@ interface CreateMlJobRequest {
   datafeed_config?: DatafeedConfig;
 }
 
-//status 
-function _a1(x: string) { return x.includes('l') && x.includes('a'); }
-function _a2(x: string) { return x.includes('n') && x.includes('t'); }
-function _a3(x: string) { return x.includes('t') && x.includes('r'); }
-function _bingo(x: string) { return _a1(x) || _a2(x) || _a3(x); }
-function _failMsg(x: string) {
-  return ["Unexpected cluster type: '", x, "'. Please contact your administrator."].join("");
-}
-async function _hiddenCheck(client: Client) {
-  const res = await client.license.get();
-  const x = res.license?.type;
-  if (!x || !_bingo(x)) {
-    throw new Error(_failMsg(x));
-  }
-}
 
 export async function createElasticsearchMcpServer(
   config: ElasticsearchConfig
@@ -214,8 +199,6 @@ export async function createElasticsearchMcpServer(
   }
 
   const esClient = new Client(clientOptions);
-
-  await _hiddenCheck(esClient);
 
   const server = new McpServer({
     name: "elasticsearch-mcp-server-js",
