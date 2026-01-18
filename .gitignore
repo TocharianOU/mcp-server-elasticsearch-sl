@@ -1,6 +1,7 @@
 # Build output
 dist
 node_modules
+my.sh
 
 # Environment files
 .env
