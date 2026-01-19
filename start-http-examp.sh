@@ -17,6 +17,9 @@ export MCP_TRANSPORT="http"
 export MCP_HTTP_PORT="3001"
 export MCP_HTTP_HOST="0.0.0.0"
 
+# Token Limit Configuration
+export MAX_TOKEN_CALL="20000"
+
 echo ""
 echo "📋 Configuration:"
 echo "   Elasticsearch URL: ${ES_URL}"
@@ -24,6 +27,7 @@ echo "   Username: ${ES_USERNAME}"
 echo "   HTTP Host: ${MCP_HTTP_HOST}"
 echo "   HTTP Port: ${MCP_HTTP_PORT}"
 echo "   TLS Validation: Disabled"
+echo "   Max Token per Call: ${MAX_TOKEN_CALL}"
 echo ""
 echo "🌐 Server will be available at:"
 echo "   • MCP Endpoint: http://${MCP_HTTP_HOST}:${MCP_HTTP_PORT}/mcp"
