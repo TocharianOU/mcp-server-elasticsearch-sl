@@ -1,7 +1,7 @@
 {
   "name": "@tocharian/mcp-server-elasticsearch-sl",
   "description": "Enhanced Elasticsearch MCP Server with full API support",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
   "type": "module",
