@@ -7,6 +7,7 @@ import { registerGetMappings } from "./tools/get-mappings.js";
 import { registerSearch } from "./tools/search.js";
 import { registerExecuteApi } from "./tools/execute-api.js";
 import { registerGetShards } from "./tools/get-shards.js";
+import { registerListDataStreams } from "./tools/list-datastreams.js";
 
 // Configuration schema with auth options
 const ConfigSchema = z
@@ -108,7 +109,7 @@ export async function createElasticsearchMcpServer(
 
   const server = new McpServer({
     name: "elasticsearch-mcp-server-js",
-    version: "0.4.0",
+    version: "0.5.0",
   });
 
   // Register all tools
@@ -117,6 +118,7 @@ export async function createElasticsearchMcpServer(
   registerSearch(server, esClient, maxTokenCall);
   registerExecuteApi(server, esClient, maxTokenCall);
   registerGetShards(server, esClient, maxTokenCall);
+  registerListDataStreams(server, esClient, maxTokenCall);
 
   return server;
 }
