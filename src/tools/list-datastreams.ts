@@ -28,11 +28,11 @@ export function registerListDataStreams(
         .describe("Filter data streams by pattern (e.g., 'logs-*', 'metrics-app-*')"),
 
       summary_level: z
-        .enum(["minimal", "compact", "full"])
+        .enum(["auto", "minimal", "compact", "full"])
         .optional()
-        .default("minimal")
+        .default("auto")
         .describe(
-          "Output detail level: minimal (list with key stats), compact (detailed analysis), full (raw data)"
+          "Output detail level: auto (intelligent based on token usage), minimal (list with key stats), compact (detailed analysis), full (raw data)"
         ),
 
       show_backing_indices: z
@@ -106,24 +106,38 @@ export function registerListDataStreams(
           }
         }
 
-        // Get health and stats for backing indices
-        const indicesStats = await esClient.cat.indices({
-          index: Array.from(allBackingIndices).join(","),
-          format: "json",
-          h: "index,health,status,docs.count,store.size,creation.date.string",
-        });
-
         // Build index info map
         const indexInfoMap = new Map<string, BackingIndex>();
-        for (const idx of indicesStats as any[]) {
-          indexInfoMap.set(idx.index, {
-            index: idx.index,
-            health: idx.health,
-            status: idx.status,
-            docs_count: parseInt(idx["docs.count"] || "0", 10),
-            store_size: idx["store.size"],
-            creation_date: idx["creation.date.string"],
-          });
+        
+        // Split into batches to avoid HTTP line too long error
+        const allIndicesArray = Array.from(allBackingIndices);
+        const BATCH_SIZE = 50; // Limit to 50 indices per request
+        
+        for (let i = 0; i < allIndicesArray.length; i += BATCH_SIZE) {
+          const batch = allIndicesArray.slice(i, i + BATCH_SIZE);
+          
+          try {
+            // Get health and stats for this batch
+            const indicesStats = await esClient.cat.indices({
+              index: batch.join(","),
+              format: "json",
+              h: "index,health,status,docs.count,store.size,creation.date.string",
+            });
+
+            for (const idx of indicesStats as any[]) {
+              indexInfoMap.set(idx.index, {
+                index: idx.index,
+                health: idx.health,
+                status: idx.status,
+                docs_count: parseInt(idx["docs.count"] || "0", 10),
+                store_size: idx["store.size"],
+                creation_date: idx["creation.date.string"],
+              });
+            }
+          } catch (batchError) {
+            // If batch still fails, skip this batch and continue
+            console.error(`Failed to fetch stats for batch: ${batchError}`);
+          }
         }
 
         // Process data streams
@@ -189,6 +203,8 @@ export function registerListDataStreams(
 
         let resultText = "";
         let originalTokens = 0;
+        let actualLevel: string = summary_level || "auto";
+        let autoSwitchMessage = "";
 
         // Calculate original data size
         if (summary_level !== "full") {
@@ -196,75 +212,146 @@ export function registerListDataStreams(
           originalTokens = calculateTokens(originalData);
         }
 
-        // Generate output
-        if (compare_mode || (summaries.length > 10 && summary_level === "minimal")) {
-          // Comparison mode
+        // Auto threshold for switching to summary mode
+        const AUTO_SUMMARY_THRESHOLD = 50;
+        const isLargeSet = summaries.length > AUTO_SUMMARY_THRESHOLD;
+        const shouldUseSummary = compare_mode || (isLargeSet && summary_level === "auto");
+
+        // Generate output based on mode
+        if (summary_level === "full") {
+          // Full mode: Return raw JSON
+          resultText = `Raw data streams information:\n\n`;
+          resultText += JSON.stringify(
+            {
+              data_streams: dsResponse.data_streams,
+              indices_stats: Array.from(indexInfoMap.values()),
+            },
+            null,
+            2
+          );
+          actualLevel = "full";
+        } else if (summary_level === "auto") {
+          // Auto mode: Try levels until one fits within token limit
+          
+          if (shouldUseSummary) {
+            // Large set: start with comparison mode
+            const comparisonText = formatComparison(compareDataStreams(summaries));
+            const comparisonTokens = calculateTokens(comparisonText);
+            
+            if (comparisonTokens <= maxTokenCall || break_token_rule) {
+              resultText = comparisonText;
+              actualLevel = "comparison";
+              if (summaries.length > displayCount) {
+                resultText += `\nShowing top ${displayCount} of ${summaries.length} data streams\n`;
+              }
+            } else {
+              // Even comparison is too large, use ultra-minimal
+              actualLevel = "minimal";
+              autoSwitchMessage = `⚠️  Large dataset detected (${summaries.length} streams).\n` +
+                                 `Comparison mode would use ${comparisonTokens.toLocaleString()} tokens.\n` +
+                                 `Auto-switched to minimal mode.\n\n`;
+              
+              // Generate minimal list with fewer items
+              const minimalDisplayCount = Math.min(20, displayCount);
+              resultText = `Data Streams Overview (${summaries.length} total)\n`;
+              resultText += `${"=".repeat(70)}\n\n`;
+              
+              for (const summary of summaries.slice(0, minimalDisplayCount)) {
+                resultText += formatMinimal(summary);
+              }
+              
+              if (summaries.length > minimalDisplayCount) {
+                resultText += `\n... and ${summaries.length - minimalDisplayCount} more data streams\n`;
+                resultText += `\n💡 Use pattern filter to narrow down results\n`;
+              }
+            }
+          } else {
+            // Smaller set: try minimal list first
+            let minimalText = `Data Streams (${summaries.length} total)\n`;
+            minimalText += `${"=".repeat(70)}\n\n`;
+            
+            for (const summary of displaySummaries) {
+              minimalText += formatMinimal(summary);
+            }
+            
+            if (summaries.length > displayCount) {
+              minimalText += `\nShowing ${displayCount} of ${summaries.length} data streams\n`;
+            }
+            
+            const minimalTokens = calculateTokens(minimalText);
+            
+            if (minimalTokens <= maxTokenCall || break_token_rule) {
+              resultText = minimalText;
+              actualLevel = "minimal";
+            } else {
+              // Minimal list still too large, use comparison
+              const comparisonText = formatComparison(compareDataStreams(summaries));
+              const comparisonTokens = calculateTokens(comparisonText);
+              
+              if (comparisonTokens <= maxTokenCall || break_token_rule) {
+                resultText = comparisonText;
+                actualLevel = "comparison";
+                autoSwitchMessage = `⚠️  Detailed list would use ${minimalTokens.toLocaleString()} tokens.\n` +
+                                   `Auto-switched to comparison mode.\n\n`;
+              } else {
+                // Last resort: ultra-minimal
+                resultText = comparisonText;
+                actualLevel = "comparison";
+                autoSwitchMessage = `⚠️  Large result set. Auto-switched to comparison mode.\n\n`;
+              }
+            }
+          }
+        } else if (compare_mode) {
+          // Explicit comparison mode
           const comparison = compareDataStreams(summaries);
           resultText = formatComparison(comparison);
+          actualLevel = "comparison";
 
           if (summaries.length > displayCount) {
             resultText += `\nShowing top ${displayCount} of ${summaries.length} data streams\n`;
           }
+        } else if (summary_level === "compact") {
+          // Compact mode: Detailed analysis
+          resultText = `Data Streams (${summaries.length} total)\n`;
+          resultText += `${"=".repeat(70)}\n\n`;
 
-          // Add detailed list if requested
-          if (summary_level === "compact") {
-            resultText += `\n${"=".repeat(70)}\n`;
-            resultText += `\nDetailed Data Streams:\n\n`;
-            for (const summary of displaySummaries.slice(0, 10)) {
-              resultText += formatCompact(summary) + "\n";
-            }
-            if (displaySummaries.length > 10) {
-              resultText += `\n... and ${displaySummaries.length - 10} more data streams\n`;
-            }
+          for (const summary of displaySummaries) {
+            resultText += formatCompact(summary) + "\n";
           }
+
+          if (summaries.length > displayCount) {
+            resultText += `\nShowing ${displayCount} of ${summaries.length} data streams\n`;
+          }
+          actualLevel = "compact";
         } else {
-          // Individual listing mode
-          if (summary_level === "full") {
-            // Return raw JSON
-            resultText = `Raw data streams information:\n\n`;
-            resultText += JSON.stringify(
-              {
-                data_streams: dsResponse.data_streams,
-                indices_stats: Array.from(indexInfoMap.values()),
-              },
-              null,
-              2
-            );
-          } else if (summary_level === "compact") {
-            resultText = `Data Streams (${summaries.length} total)\n`;
-            resultText += `${"=".repeat(70)}\n\n`;
+          // Minimal mode (explicit)
+          resultText = `Data Streams (${summaries.length} total)\n`;
+          resultText += `${"=".repeat(70)}\n\n`;
 
-            for (const summary of displaySummaries) {
-              resultText += formatCompact(summary) + "\n";
-            }
-
-            if (summaries.length > displayCount) {
-              resultText += `\nShowing ${displayCount} of ${summaries.length} data streams\n`;
-            }
-          } else {
-            // minimal (default)
-            resultText = `Data Streams (${summaries.length} total)\n`;
-            resultText += `${"=".repeat(70)}\n\n`;
-
-            for (const summary of displaySummaries) {
-              resultText += formatMinimal(summary);
-            }
-
-            if (summaries.length > displayCount) {
-              resultText += `\nShowing ${displayCount} of ${summaries.length} data streams\n`;
-            }
+          for (const summary of displaySummaries) {
+            resultText += formatMinimal(summary);
           }
+
+          if (summaries.length > displayCount) {
+            resultText += `\nShowing ${displayCount} of ${summaries.length} data streams\n`;
+          }
+          actualLevel = "minimal";
+        }
+
+        // Prepend auto-switch message if any
+        if (autoSwitchMessage) {
+          resultText = autoSwitchMessage + resultText;
         }
 
         // Add token statistics
-        if (summary_level !== "full" && originalTokens > 0) {
+        if (actualLevel !== "full" && originalTokens > 0) {
           const optimizedTokens = calculateTokens(resultText);
           const savings = originalTokens - optimizedTokens;
           const savingsPercent = ((savings / originalTokens) * 100).toFixed(1);
 
           resultText += `\n${"=".repeat(70)}\n`;
           resultText += `Token Statistics:\n`;
-          resultText += `  Summary Level:    ${summary_level}\n`;
+          resultText += `  Summary Level:    ${actualLevel}${summary_level === "auto" ? " (auto-selected)" : ""}\n`;
           resultText += `  Original Data:    ${originalTokens.toLocaleString()} tokens\n`;
           resultText += `  Optimized:        ${optimizedTokens.toLocaleString()} tokens\n`;
           resultText += `  Saved:            ${savings.toLocaleString()} tokens (${savingsPercent}% reduction)\n`;
