@@ -30,3 +30,7 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 
+
+# Backup files
+*.backup
+index.ts.backup
