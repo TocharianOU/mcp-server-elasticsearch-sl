@@ -1,7 +1,7 @@
 {
   "name": "@tocharian/mcp-server-elasticsearch-sl",
   "description": "Enhanced Elasticsearch MCP Server with full API support",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
   "type": "module",
@@ -45,6 +45,10 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
+    "@elastic/elasticsearch-v8": "npm:@elastic/elasticsearch@^8.15.0",
+    "@elastic/elasticsearch-v7": "npm:@elastic/elasticsearch@^7.17.0",
+    "@elastic/elasticsearch-v6": "npm:@elastic/elasticsearch@^6.8.0",
+    "@elastic/elasticsearch-v5": "npm:@elastic/elasticsearch@^5.6.0",
     "@modelcontextprotocol/sdk": "^1.22.0",
     "@types/express": "^5.0.3",
     "express": "^5.1.0",

@@ -30,6 +30,29 @@ Connect to your Elasticsearch data directly from any MCP Client (such as Claude 
 
 > ⚠️ This project requires your Elasticsearch cluster to have a valid license. If you do not have a license, you can activate a trial license as shown below.
 
+## Multi-Version Elasticsearch Support
+
+**Automatically supports Elasticsearch 5.x - 9.x with intelligent version detection:**
+
+| Version | Status | Client | Notes |
+|---------|--------|--------|-------|
+| ES 5.x | ✅ | 5.6.22 | EOL - Basic tools only |
+| ES 6.x | ✅ | 6.8.8 | EOL - ILM available (6.6+) |
+| ES 7.x | ✅ | 7.17.14 | LTS - Full features |
+| ES 8.x | ✅ | 8.19.1 | **Recommended** - Latest features |
+| ES 9.x+ | ✅ | Auto-fallback | Future-ready |
+
+**Key Features:**
+- 🔍 **Automatic version detection** - No manual configuration needed
+- 🔄 **Smart client selection** - Loads the right client for your ES version
+- ⚙️ **Adaptive features** - Disables unsupported tools (e.g., Data Streams on ES < 7.9)
+- 📊 **Version-specific optimizations** - Handles API differences transparently
+
+**What happens:**
+```
+Connect → Detect ES version → Load matching client → Register compatible tools
+```
+
 ## SSL/TLS Connection
 
 To connect to Elasticsearch with a self-signed certificate or in a test environment, you can set the following environment variable:

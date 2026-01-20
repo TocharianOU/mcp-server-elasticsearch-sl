@@ -2,6 +2,11 @@
 dist
 node_modules
 my.sh
+test-es5.sh
+test-es6.sh
+test-es7.sh
+test-es8.sh
+quick-test-*.js
 
 # Environment files
 .env
