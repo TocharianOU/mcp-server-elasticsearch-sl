@@ -28,7 +28,7 @@ export async function createVersionedClient(
           // @ts-expect-error - ES 9 client may not be available yet
           const v9Module = await import('@elastic/elasticsearch-v9');
           ClientClass = v9Module.Client;
-          console.log('Using ES 9.x client');
+          console.error('Using ES 9.x client');
         } catch (es9Error) {
           console.warn(`ES 9.x client not available, using ES 8.x client as fallback`);
           clientPackage = '@elastic/elasticsearch-v8';
@@ -75,7 +75,7 @@ export async function createVersionedClient(
           // @ts-expect-error - ES 9 client may not be available yet
           const v9Module = await import('@elastic/elasticsearch-v9');
           ClientClass = v9Module.Client;
-          console.log(`✓ Using ES 9.x client for ES ${version.full}`);
+          console.error(`✓ Using ES 9.x client for ES ${version.full}`);
         } catch (v9Error) {
           // ES 9 not available, fallback to ES 8
           console.warn(
@@ -84,12 +84,12 @@ export async function createVersionedClient(
           clientPackage = '@elastic/elasticsearch-v8';
           const v8Module = await import('@elastic/elasticsearch-v8');
           ClientClass = v8Module.Client;
-          console.log(`✓ Using ES 8.x client for ES ${version.full} (fallback)`);
+          console.error(`✓ Using ES 8.x client for ES ${version.full} (fallback)`);
         }
         break;
     }
 
-    console.log(`Using ${clientPackage} for ES ${version.full}`);
+    console.error(`Using ${clientPackage} for ES ${version.full}`);
 
     // Create client instance
     const client = new ClientClass(options);

@@ -1,0 +1,163 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.tocharianou/elasticsearch",
+  "description": "Elasticsearch MCP Server with full version support (ES 5.x-9.x) and comprehensive API access. Focused on security analysis, threat detection, and incident investigation.",
+  "title": "Elasticsearch",
+  "websiteUrl": "https://github.com/TocharianOU/elasticsearch-mcp",
+  "repository": {
+    "url": "https://github.com/TocharianOU/elasticsearch-mcp",
+    "source": "github"
+  },
+  "version": "0.6.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@tocharianou/elasticsearch-mcp",
+      "version": "0.6.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ES_URL",
+          "description": "Your Elasticsearch instance URL (e.g., https://localhost:9200)",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_API_KEY",
+          "description": "Elasticsearch API key for authentication",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_USERNAME",
+          "description": "Elasticsearch username for basic authentication",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "ES_PASSWORD",
+          "description": "Elasticsearch password for basic authentication",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_CA_CERT",
+          "description": "Path to custom CA certificate for Elasticsearch SSL/TLS",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "NODE_TLS_REJECT_UNAUTHORIZED",
+          "description": "Set to '0' to disable SSL certificate validation (development only)",
+          "isRequired": false,
+          "format": "string",
+          "default": "1"
+        },
+        {
+          "name": "MAX_TOKEN_CALL",
+          "description": "Maximum tokens per API call",
+          "isRequired": false,
+          "format": "number",
+          "default": "20000"
+        }
+      ]
+    },
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@tocharianou/elasticsearch-mcp",
+      "version": "0.6.2",
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:{MCP_HTTP_PORT}/mcp"
+      },
+      "environmentVariables": [
+        {
+          "name": "MCP_TRANSPORT",
+          "description": "Transport mode selection",
+          "isRequired": true,
+          "format": "string",
+          "default": "http",
+          "choices": ["stdio", "http"]
+        },
+        {
+          "name": "MCP_HTTP_PORT",
+          "description": "HTTP server port (when using HTTP transport)",
+          "isRequired": false,
+          "format": "number",
+          "default": "3000"
+        },
+        {
+          "name": "MCP_HTTP_HOST",
+          "description": "HTTP server host (when using HTTP transport)",
+          "isRequired": false,
+          "format": "string",
+          "default": "localhost"
+        },
+        {
+          "name": "ES_URL",
+          "description": "Your Elasticsearch instance URL (e.g., https://localhost:9200)",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_API_KEY",
+          "description": "Elasticsearch API key for authentication",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_USERNAME",
+          "description": "Elasticsearch username for basic authentication",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "ES_PASSWORD",
+          "description": "Elasticsearch password for basic authentication",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ES_CA_CERT",
+          "description": "Path to custom CA certificate for Elasticsearch SSL/TLS",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "NODE_TLS_REJECT_UNAUTHORIZED",
+          "description": "Set to '0' to disable SSL certificate validation (development only)",
+          "isRequired": false,
+          "format": "string",
+          "default": "1"
+        },
+        {
+          "name": "MAX_TOKEN_CALL",
+          "description": "Maximum tokens per API call",
+          "isRequired": false,
+          "format": "number",
+          "default": "20000"
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tool": "manual",
+      "version": "0.6.2",
+      "features": {
+        "multi_version_support": "ES 5.x-9.x",
+        "transport_modes": ["stdio", "http"],
+        "security_focused": true,
+        "auto_version_detection": true
+      }
+    }
+  }
+}

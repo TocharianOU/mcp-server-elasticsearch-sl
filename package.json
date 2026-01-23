@@ -1,23 +1,24 @@
 {
-  "name": "@tocharian/mcp-server-elasticsearch-sl",
-  "description": "Enhanced Elasticsearch MCP Server with full API support",
-  "version": "0.6.0",
+  "name": "@tocharianou/elasticsearch-mcp",
+  "description": "Elasticsearch MCP Server with full version support (ES 5.x-9.x) and comprehensive API access",
+  "version": "0.6.2",
+  "mcpName": "io.github.tocharianou/elasticsearch",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "bin": {
-    "mcp-server-elasticsearch-sl": "./dist/index.js"
+    "elasticsearch-mcp": "./dist/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TocharianOU/mcp-server-elasticsearch-sl.git"
+    "url": "git+https://github.com/TocharianOU/elasticsearch-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/TocharianOU/mcp-server-elasticsearch-sl/issues"
+    "url": "https://github.com/TocharianOU/elasticsearch-mcp/issues"
   },
-  "homepage": "https://github.com/TocharianOU/mcp-server-elasticsearch-sl#readme",
+  "homepage": "https://github.com/TocharianOU/elasticsearch-mcp#readme",
   "keywords": [
     "elasticsearch",
     "search",

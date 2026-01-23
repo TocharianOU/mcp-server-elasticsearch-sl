@@ -1,7 +1,7 @@
-# Elasticsearch MCP Server Solution
-[![npm version](https://badge.fury.io/js/@tocharian%2Fmcp-server-elasticsearch-sl.svg)](https://www.npmjs.com/package/@tocharian/mcp-server-elasticsearch-sl)
-[![Downloads](https://img.shields.io/npm/dm/@tocharian/mcp-server-elasticsearch-sl.svg)](https://www.npmjs.com/package/@tocharian/mcp-server-elasticsearch-sl)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TocharianOU/mcp-server-elasticsearch-sl)
+# Elasticsearch MCP Server
+[![npm version](https://badge.fury.io/js/@tocharianou%2Felasticsearch-mcp.svg)](https://www.npmjs.com/package/@tocharianou/elasticsearch-mcp)
+[![Downloads](https://img.shields.io/npm/dm/@tocharianou/elasticsearch-mcp.svg)](https://www.npmjs.com/package/@tocharianou/elasticsearch-mcp)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TocharianOU/elasticsearch-mcp)
 
 > **Enhanced Elasticsearch MCP Server Solution - Security & Threat Analysis Focused**
 
@@ -104,20 +104,20 @@ The Elasticsearch MCP Server supports the following configuration options:
 
 1. **Install globally via NPM**
    ```bash
-   npm install -g @tocharian/mcp-server-elasticsearch-sl
+   npm install -g @tocharianou/elasticsearch-mcp
    ```
 
 2. **Run directly**
    ```bash
-   npx @tocharian/mcp-server-elasticsearch-sl
+   npx @tocharianou/elasticsearch-mcp
    ```
 
 #### Option 2: Source Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/TocharianOU/mcp-server-elasticsearch-sl.git
-   cd mcp-server-elasticsearch-sl
+   git clone https://github.com/TocharianOU/elasticsearch-mcp.git
+   cd elasticsearch-mcp
    ```
 
 2. **Install Dependencies**
@@ -142,7 +142,7 @@ The Elasticsearch MCP Server supports the following configuration options:
        "elasticsearch-mcp-server": {
          "command": "npx",
          "args": [
-           "@tocharian/mcp-server-elasticsearch-sl"
+           "@tocharianou/elasticsearch-mcp"
          ],
          "env": {
            "ES_URL": "your-elasticsearch-url",
@@ -162,7 +162,7 @@ The Elasticsearch MCP Server supports the following configuration options:
        "elasticsearch-mcp-server-local": {
          "command": "node",
          "args": [
-           "/path/to/your/mcp-server-elasticsearch-sl/dist/index.js"
+           "/path/to/your/elasticsearch-mcp/dist/index.js"
          ],
          "env": {
            "ES_URL": "your-elasticsearch-url",
@@ -199,7 +199,7 @@ MCP_TRANSPORT=http \
 ES_URL=your-elasticsearch-url \
 ES_USERNAME=elastic \
 ES_PASSWORD=your_pass \
-npx @tocharian/mcp-server-elasticsearch-sl
+npx @tocharianou/elasticsearch-mcp
 
 # Or with custom port and host
 MCP_TRANSPORT=http \
@@ -208,7 +208,7 @@ MCP_HTTP_HOST=0.0.0.0 \
 ES_URL=your-elasticsearch-url \
 ES_USERNAME=elastic \
 ES_PASSWORD=your_pass \
-npx @tocharian/mcp-server-elasticsearch-sl
+npx @tocharianou/elasticsearch-mcp
 ```
 
 **HTTP Streamable Mode Features:**

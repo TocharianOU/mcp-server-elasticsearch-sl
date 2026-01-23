@@ -127,16 +127,16 @@ async function main() {
 
       // Start HTTP server
       app.listen(httpPort, httpHost, () => {
-        console.log(`\n✓ Elasticsearch MCP Server (HTTP Streamable Mode) is running`);
-        console.log(`  Endpoint: http://${httpHost}:${httpPort}/mcp`);
-        console.log(`  Health: http://${httpHost}:${httpPort}/health`);
-        console.log(`  Transport: Streamable HTTP`);
-        console.log(`  Elasticsearch URL: ${config.url}\n`);
+        console.error(`\n✓ Elasticsearch MCP Server (HTTP Streamable Mode) is running`);
+        console.error(`  Endpoint: http://${httpHost}:${httpPort}/mcp`);
+        console.error(`  Health: http://${httpHost}:${httpPort}/health`);
+        console.error(`  Transport: Streamable HTTP`);
+        console.error(`  Elasticsearch URL: ${config.url}\n`);
       });
 
       // Handle process termination
       process.on("SIGINT", async () => {
-        console.log("\nShutting down server...");
+        console.error("\nShutting down server...");
         for (const [sessionId, transport] of transports.entries()) {
           await transport.close();
         }
