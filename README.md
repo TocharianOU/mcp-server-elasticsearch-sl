@@ -39,14 +39,14 @@ Connect to your Elasticsearch data directly from any MCP Client (such as Claude 
 | ES 5.x | ✅ | 5.6.22 | EOL - Basic tools only |
 | ES 6.x | ✅ | 6.8.8 | EOL - ILM available (6.6+) |
 | ES 7.x | ✅ | 7.17.14 | LTS - Full features |
-| ES 8.x | ✅ | 8.19.1 | **Recommended** - Latest features |
+| ES 8.x | ✅ | 8.19.1 | **Recommended** - Latest features, ES\|QL (8.11+) |
 | ES 9.x+ | ✅ | Auto-fallback | Future-ready |
 
 **Key Features:**
-- 🔍 **Automatic version detection** - No manual configuration needed
-- 🔄 **Smart client selection** - Loads the right client for your ES version
-- ⚙️ **Adaptive features** - Disables unsupported tools (e.g., Data Streams on ES < 7.9)
-- 📊 **Version-specific optimizations** - Handles API differences transparently
+- **Automatic version detection** - No manual configuration needed
+- **Smart client selection** - Loads the right client for your ES version
+- **Adaptive features** - Disables unsupported tools (e.g., Data Streams on ES < 7.9, ES|QL on ES < 8.11)
+- **Version-specific optimizations** - Handles API differences transparently
 
 **What happens:**
 ```
@@ -207,7 +207,7 @@ The Elasticsearch MCP Server supports the following configuration options:
    Starting MCP inspector...
    Proxy server listening on port 3000
 
-   🔍 MCP Inspector is up and running at http://localhost:5173 🚀
+   MCP Inspector is up and running at http://localhost:5173
    ```
 
 ### Method 3: HTTP Streamable Mode (NEW in v0.3.0)
@@ -292,6 +292,39 @@ const indicesResponse = await fetch('http://localhost:3000/mcp', {
   })
 });
 ```
+
+## Available Tools
+
+| Tool | Description | Min Version |
+|------|-------------|-------------|
+| `list_indices` | List indices with pattern filter, health filter, sorting and token-aware summary | ES 5.x+ |
+| `get_mappings` | Get field mappings with flat/tree/raw modes, field filtering and multi-index compare | ES 5.x+ |
+| `es_search` | Full Query DSL search with auto-highlight on text/vector fields | ES 5.x+ |
+| `execute_es_api` | Execute any ES REST endpoint directly (GET/POST/PUT/DELETE/HEAD) | ES 5.x+ |
+| `get_shards` | Shard info with health analysis, problem detection and recommendations | ES 5.x+ |
+| `list_data_streams` | List and analyze Data Streams with ILM info and backing index details | ES 7.9+ |
+| `esql_query` | Execute ES\|QL pipe-based queries with tabular output and parameterised support | **ES 8.11+** |
+
+> Tools not supported by your cluster version are automatically skipped at startup.
+
+### ES|QL Query Tool (`esql_query`)
+
+ES|QL is Elasticsearch's modern pipe-based query language, ideal for analytics and data exploration without complex JSON DSL.
+
+**Example queries:**
+```
+FROM logs-* | WHERE level == "error" | STATS count = COUNT(*) BY service | SORT count DESC | LIMIT 20
+FROM metrics-* | WHERE @timestamp > NOW() - 1 hour | STATS avg_cpu = AVG(cpu.usage) BY host.name
+FROM auditbeat-* | WHERE event.action == "user_login" AND event.outcome == "failure" | LIMIT 50
+```
+
+**Parameters:**
+- `query` — the ES|QL string (required)
+- `params` — positional parameters replacing `?` placeholders (optional)
+- `include_types` — include column type info in output (optional, default `false`)
+- `break_token_rule` — bypass token limit for large results (optional, default `false`)
+
+> Automatically registered only on ES 8.11+ clusters.
 
 ## Contributing
 
