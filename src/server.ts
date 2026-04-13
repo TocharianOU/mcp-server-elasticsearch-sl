@@ -11,6 +11,7 @@ import { registerSearch } from "./tools/search.js";
 import { registerExecuteApi } from "./tools/execute-api.js";
 import { registerGetShards } from "./tools/get-shards.js";
 import { registerListDataStreams } from "./tools/list-datastreams.js";
+import { registerEsql } from "./tools/esql.js";
 
 // Configuration schema with auth options
 const ConfigSchema = z
@@ -138,7 +139,7 @@ export async function createElasticsearchMcpServer(
   // Step 6: Create MCP server
   const server = new McpServer({
     name: "elasticsearch-mcp",
-    version: "0.7.3",
+    version: "0.8.0",
   });
 
   // Step 7: Conditional tool registration
@@ -167,6 +168,14 @@ export async function createElasticsearchMcpServer(
     registeredTools.push("list_data_streams");
   } else {
     skippedTools.push("list_data_streams (requires ES 7.9+)");
+  }
+
+  // Conditional: ES|QL (ES 8.11+)
+  if (capabilityManager.supportsESQL()) {
+    registerEsql(server, esClient, maxTokenCall);
+    registeredTools.push("esql_query");
+  } else {
+    skippedTools.push("esql_query (requires ES 8.11+)");
   }
 
   return server;

@@ -64,6 +64,14 @@ export class CapabilityManager {
   }
 
   /**
+   * Feature: ES|QL (ES 8.11+)
+   * ES|QL is Elasticsearch's pipe-based query language, GA since 8.11.0.
+   */
+  supportsESQL(): boolean {
+    return this.meetsVersion(8, 11);
+  }
+
+  /**
    * Feature: Cross-cluster search (ES 5.3+)
    */
   supportsCrossClusterSearch(): boolean {
@@ -122,6 +130,10 @@ export class CapabilityManager {
       tools.push('list_data_streams');
     }
 
+    if (this.supportsESQL()) {
+      tools.push('esql_query');
+    }
+
     return tools;
   }
 
@@ -136,6 +148,14 @@ export class CapabilityManager {
         tool: 'list_data_streams',
         reason: 'Data Streams not available',
         minVersion: '7.9.0',
+      });
+    }
+
+    if (!this.supportsESQL()) {
+      unsupported.push({
+        tool: 'esql_query',
+        reason: 'ES|QL not available',
+        minVersion: '8.11.0',
       });
     }
 
@@ -164,6 +184,10 @@ export class CapabilityManager {
 
     if (!this.supportsDataStreams()) {
       warnings.push('Data Streams feature not available (requires ES 7.9+)');
+    }
+
+    if (!this.supportsESQL()) {
+      warnings.push('ES|QL not available (requires ES 8.11+)');
     }
 
     return warnings;
@@ -270,6 +294,7 @@ export class CapabilityManager {
       { name: 'Runtime Fields', supported: this.supportsRuntimeFields() },
       { name: 'Point in Time', supported: this.supportsPointInTime() },
       { name: 'SQL API', supported: this.supportsSQL() },
+      { name: 'ES|QL', supported: this.supportsESQL() },
       { name: 'Cross-cluster Search', supported: this.supportsCrossClusterSearch() },
     ];
 

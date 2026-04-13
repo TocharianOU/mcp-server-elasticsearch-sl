@@ -1,7 +1,7 @@
 {
   "name": "@tocharianou/elasticsearch-mcp",
   "description": "Elasticsearch MCP Server with full version support (ES 5.x-9.x) and comprehensive API access",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "mcpName": "io.github.TocharianOU/elasticsearch",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
