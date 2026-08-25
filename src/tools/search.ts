@@ -2,16 +2,32 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Client, estypes } from "@elastic/elasticsearch";
 import { checkTokenLimit } from "../token-limiter.js";
+import type { FieldCapsService, FieldMap } from "../lint/field-caps-service.js";
+import { extractDslFields } from "../lint/field-extractor.js";
+import {
+  collectDslDefinedFields,
+  enrichEsError,
+  formatLintReport,
+  lintFieldRefs,
+  rewriteDslFields,
+} from "../lint/query-lint.js";
+import { adviseOnIndexName, enrichIndexError } from "../lint/index-conventions.js";
 
 export function registerSearch(
   server: McpServer,
   esClient: Client,
-  maxTokenCall: number
+  maxTokenCall: number,
+  fieldCaps?: FieldCapsService,
+  esMajor: number = 8
 ) {
   // Tool 3: Search an index with simplified parameters
   server.tool(
     "es_search",
-    "Perform an Elasticsearch search with the provided query DSL. Highlights are always enabled.",
+    "Perform an Elasticsearch search with the provided query DSL. Highlights are always enabled. " +
+    "Field names are validated against the index's real field_caps before execution: " +
+    "unambiguous mistakes (e.g. a spurious .keyword suffix on ECS/built-in mappings) are auto-fixed, " +
+    "unknown fields return suggestions instead of running a doomed query. " +
+    "If unsure about field names, call lookup_fields or get_mappings first instead of guessing.",
     {
       index: z
         .string()
@@ -43,8 +59,43 @@ export function registerSearch(
         .optional()
         .default(false)
         .describe("Set to true to bypass token limits in critical situations. Use sparingly to avoid context overflow."),
+
+      skip_lint: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe(
+          "Skip pre-execution field validation. Only set true when you are certain a flagged field exists (e.g. runtime fields defined outside the query)."
+        ),
     },
-    async ({ index, queryBody, break_token_rule }) => {
+    async ({ index, queryBody, break_token_rule, skip_lint }) => {
+      // ── Field lint: validate/auto-fix field references against live field_caps
+      let lintNotes: string[] = [];
+      let liveFields: FieldMap | null = null;
+      const indexAdvice = adviseOnIndexName(index, esMajor);
+      if (indexAdvice) lintNotes.push(`提示：${indexAdvice}`);
+      if (fieldCaps && !skip_lint) {
+        try {
+          liveFields = await fieldCaps.getFields(index);
+          if (liveFields.size > 0) {
+            const defined = collectDslDefinedFields(queryBody);
+            const refs = extractDslFields(queryBody);
+            const { fixes, notes, problems } = lintFieldRefs(refs, liveFields, defined);
+            if (problems.length > 0) {
+              return {
+                content: [{ type: "text" as const, text: formatLintReport(problems) }],
+                isError: true,
+              };
+            }
+            if (fixes.size > 0) {
+              queryBody = rewriteDslFields(queryBody, fixes);
+              lintNotes.push(...notes);
+            }
+          }
+        } catch {
+          // lint must never break the tool; fall through to normal execution
+        }
+      }
       try {
         // Get mappings to identify text fields for highlighting
         const mappingResponse = await esClient.indices.getMapping({
@@ -126,8 +177,13 @@ export function registerSearch(
           });
         }
 
+        const lintFragments = lintNotes.length
+          ? [{ type: "text" as const, text: lintNotes.join("\n") }]
+          : [];
+
         const resultContent = {
           content: [
+            ...lintFragments,
             metadataFragment,
             ...aggregationFragments,
             ...contentFragments,
@@ -150,13 +206,12 @@ export function registerSearch(
 
         return resultContent;
       } catch (error) {
+        const raw = error instanceof Error ? error.message : String(error);
         return {
           content: [
             {
               type: "text" as const,
-              text: `Error: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
+              text: `Error: ${enrichIndexError(enrichEsError(raw, liveFields), esMajor)}`,
             },
           ],
         };

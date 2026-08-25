@@ -5,6 +5,8 @@ import fs from "fs";
 import { detectESVersion, formatVersionInfo } from "./version-detector.js";
 import { createVersionedClient, verifyConnection } from "./client-factory.js";
 import { CapabilityManager } from "./capability-manager.js";
+import { FieldCapsService } from "./lint/field-caps-service.js";
+import { registerLookupFields } from "./tools/lookup-fields.js";
 import { registerListIndices } from "./tools/list-indices.js";
 import { registerGetMappings } from "./tools/get-mappings.js";
 import { registerSearch } from "./tools/search.js";
@@ -139,7 +141,7 @@ export async function createElasticsearchMcpServer(
   // Step 6: Create MCP server
   const server = new McpServer({
     name: "elasticsearch-mcp",
-    version: "0.8.0",
+    version: "0.9.0",
   });
 
   // Step 7: Conditional tool registration
@@ -153,8 +155,16 @@ export async function createElasticsearchMcpServer(
   registerGetMappings(server, esClient, maxTokenCall);
   registeredTools.push("get_mappings");
 
-  registerSearch(server, esClient, maxTokenCall);
+  // Shared field-caps cache backing the query lint layer (field_caps is
+  // available on every supported ES version >= 5.4; lint degrades to a
+  // no-op automatically if the call fails).
+  const fieldCapsService = new FieldCapsService(esClient);
+
+  registerSearch(server, esClient, maxTokenCall, fieldCapsService, versionInfo.major);
   registeredTools.push("es_search");
+
+  registerLookupFields(server, fieldCapsService, () => versionInfo.major);
+  registeredTools.push("lookup_fields");
 
   registerExecuteApi(server, esClient, maxTokenCall);
   registeredTools.push("execute_es_api");
@@ -172,7 +182,7 @@ export async function createElasticsearchMcpServer(
 
   // Conditional: ES|QL (ES 8.11+)
   if (capabilityManager.supportsESQL()) {
-    registerEsql(server, esClient, maxTokenCall);
+    registerEsql(server, esClient, maxTokenCall, fieldCapsService, versionInfo.major);
     registeredTools.push("esql_query");
   } else {
     skippedTools.push("esql_query (requires ES 8.11+)");

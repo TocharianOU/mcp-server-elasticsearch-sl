@@ -3,6 +3,15 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Client } from "@elastic/elasticsearch";
 import { checkTokenLimit } from "../token-limiter.js";
+import type { FieldCapsService, FieldMap } from "../lint/field-caps-service.js";
+import { extractEsqlFields } from "../lint/field-extractor.js";
+import {
+  applyEsqlFixes,
+  enrichEsError,
+  formatLintReport,
+  lintFieldRefs,
+} from "../lint/query-lint.js";
+import { enrichIndexError } from "../lint/index-conventions.js";
 
 /**
  * Convert ES|QL columnar response (columns + values) into an array of row objects
@@ -58,7 +67,9 @@ function esqlToTable(
 export function registerEsql(
   server: McpServer,
   esClient: Client,
-  maxTokenCall: number
+  maxTokenCall: number,
+  fieldCaps?: FieldCapsService,
+  esMajor: number = 8
 ) {
   server.tool(
     "esql_query",
@@ -104,8 +115,48 @@ Parameterised values can be passed via the 'params' argument (use ? as placehold
         .describe(
           "Set to true to bypass token limits in critical situations. Use sparingly to avoid context overflow."
         ),
+
+      skip_lint: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe(
+          "Skip pre-execution field validation. Only set true when you are certain a flagged field exists."
+        ),
     },
-    async ({ query, params, include_types, break_token_rule }) => {
+    async ({ query, params, include_types, break_token_rule, skip_lint }) => {
+      // ── Field lint against live field_caps of the FROM target
+      let lintNotes: string[] = [];
+      let liveFields: FieldMap | null = null;
+      if (fieldCaps && !skip_lint) {
+        try {
+          const fromMatch = /\bFROM\s+([^|]+)/i.exec(query);
+          const indexPattern = fromMatch
+            ? fromMatch[1].split(/\s+METADATA\s+/i)[0].trim().replace(/\s+/g, "")
+            : null;
+          if (indexPattern) {
+            liveFields = await fieldCaps.getFields(indexPattern);
+            if (liveFields.size > 0) {
+              const refs = extractEsqlFields(query);
+              const { fixes, notes, problems } = lintFieldRefs(refs, liveFields);
+              if (problems.length > 0) {
+                return {
+                  content: [
+                    { type: "text" as const, text: formatLintReport(problems) },
+                  ],
+                  isError: true,
+                };
+              }
+              if (fixes.size > 0) {
+                query = applyEsqlFixes(query, fixes);
+                lintNotes = notes;
+              }
+            }
+          }
+        } catch {
+          // lint must never break the tool
+        }
+      }
       try {
         const requestBody: Record<string, unknown> = { query };
         if (params && params.length > 0) {
@@ -157,6 +208,9 @@ Parameterised values can be passed via the 'params' argument (use ? as placehold
 
         const resultContent = {
           content: [
+            ...(lintNotes.length
+              ? [{ type: "text" as const, text: lintNotes.join("\n") }]
+              : []),
             {
               type: "text" as const,
               text: [
@@ -214,7 +268,7 @@ Parameterised values can be passed via the 'params' argument (use ? as placehold
           content: [
             {
               type: "text" as const,
-              text: `ES|QL error: ${errorText}`,
+              text: `ES|QL error: ${enrichIndexError(enrichEsError(errorText, liveFields), esMajor)}`,
             },
           ],
           isError: true,

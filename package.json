@@ -1,7 +1,7 @@
 {
   "name": "@tocharianou/elasticsearch-mcp",
   "description": "Elasticsearch MCP Server with full version support (ES 5.x-9.x) and comprehensive API access",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "mcpName": "io.github.TocharianOU/elasticsearch",
   "license": "Apache-2.0",
   "author": "TocharianOU <tocharian139@protonmail.com>",
@@ -30,29 +30,31 @@
     "logos",
     "NOTICE.txt",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "assets"
   ],
   "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
+    "build": "tsc && shx cp -r assets dist/ && shx chmod +x dist/*.js",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run license-checker",
     "watch": "tsc --watch",
     "start": "node dist/index.js",
     "start:http": "MCP_TRANSPORT=http node dist/index.js",
     "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
-    "test": "npm run build",
+    "test": "vitest run",
     "license-checker": "license-checker --production --onlyAllow='MIT;Apache-2.0;Apache1.1;ISC;BSD-3-Clause;BSD-2-Clause;0BSD;BlueOak-1.0.0;Unlicense'",
     "license-header": "./scripts/check-spdx",
     "generate-notice": "node ./scripts/generate-notice.js",
     "release": "./scripts/create-release.sh",
-    "release:npm": "npm run build && tar -czf elasticsearch-mcp-v$npm_package_version.tar.gz dist logos LICENSE NOTICE.txt README.md package.json"
+    "release:npm": "npm run build && tar -czf elasticsearch-mcp-v$npm_package_version.tar.gz dist logos LICENSE NOTICE.txt README.md package.json",
+    "test:build": "npm run build"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
-    "@elastic/elasticsearch-v8": "npm:@elastic/elasticsearch@^8.15.0",
-    "@elastic/elasticsearch-v7": "npm:@elastic/elasticsearch@^7.17.0",
-    "@elastic/elasticsearch-v6": "npm:@elastic/elasticsearch@^6.8.0",
     "@elastic/elasticsearch-v5": "npm:@elastic/elasticsearch@^5.6.0",
+    "@elastic/elasticsearch-v6": "npm:@elastic/elasticsearch@^6.8.0",
+    "@elastic/elasticsearch-v7": "npm:@elastic/elasticsearch@^7.17.0",
+    "@elastic/elasticsearch-v8": "npm:@elastic/elasticsearch@^8.15.0",
     "@modelcontextprotocol/sdk": "^1.22.0",
     "@types/express": "^5.0.3",
     "express": "^5.1.0",
@@ -65,9 +67,11 @@
   },
   "devDependencies": {
     "@types/node": "22.13.15",
+    "js-yaml": "^5.4.0",
     "license-checker": "^25.0.1",
     "shx": "0.4.0",
-    "typescript": "5.8.2"
+    "typescript": "5.8.2",
+    "vitest": "^2.1.9"
   },
   "publishConfig": {
     "access": "public"

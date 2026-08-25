@@ -53,6 +53,40 @@ Connect to your Elasticsearch data directly from any MCP Client (such as Claude 
 Connect → Detect ES version → Load matching client → Register compatible tools
 ```
 
+## The Query Harness (v0.9.0)
+
+Since v0.9.0 the server ships a **query harness**: a deterministic layer between
+the AI model and your cluster. The design philosophy is simple:
+
+> **The model steers; the harness knows.**
+> Intent ("find failed logins by user") belongs to the model.
+> Correctness (real field names, aggregatability, version quirks) belongs to the harness.
+
+What this means in practice — at the level of principles, not internals:
+
+- **Live truth beats bundled knowledge beats model memory.** Every query is
+  checked against the cluster's actual field capabilities before it runs. A
+  bundled ECS (Elastic Common Schema) vocabulary provides *meaning*; the live
+  cluster provides *existence*. The model's own recollection is never trusted.
+- **Unambiguous mistakes are fixed silently; ambiguous ones become guidance.**
+  The classic example: a spurious `.keyword` suffix on modern ECS mappings is
+  auto-corrected (and the correction is reported); an unknown field blocks the
+  doomed query and returns the nearest real fields instead of a provider error.
+- **Field knowledge stays out of the context window.** The full ECS dictionary
+  (thousands of fields) lives in process memory. The model retrieves only the
+  handful it needs, on demand, via `lookup_fields`.
+- **Every failure must be actionable.** Raw Elasticsearch errors are rewritten
+  with live suggestions and index-naming advice (data stream vs. legacy Beats
+  naming, internal indices that should be accessed via Kibana APIs, and so on).
+- **The model needs zero version knowledge.** Naming eras, API differences and
+  mapping-style differences (legacy `text` + `.keyword` subfield vs. modern
+  bare `keyword`) are absorbed entirely by the harness. The same model behaves
+  identically against ES 5.6 and ES 9.x — verified by a version test matrix
+  covering nine watershed releases (5.6 → 9.0).
+- **An escape hatch always exists.** Validation can be bypassed per call
+  (`skip_lint`) when the model knows better — e.g. runtime fields defined
+  outside the query. The harness assists; it never imprisons.
+
 ## SSL/TLS Connection
 
 To connect to Elasticsearch with a self-signed certificate or in a test environment, you can set the following environment variable:
@@ -65,11 +99,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 
 ## Installation & Setup
 
-
-2. **Start a Conversation**
-   - Open a new conversation in your MCP Client
-   - The MCP server should connect automatically
-   - You can now ask questions about your Elasticsearch data
+Install (or run) the server, point it at your cluster via environment
+variables, register it in your MCP client, then just start a conversation —
+the server connects and registers the tools your ES version supports.
 
 ### Configuration Options
 
@@ -196,19 +228,49 @@ The Elasticsearch MCP Server supports the following configuration options:
    }
    ```
 
-6. **Debugging with MCP Inspector**
+5. **Debugging with MCP Inspector** (optional)
    ```bash
    ES_URL=your-elasticsearch-url ES_USERNAME=elastic ES_PASSWORD=your_pass npm run inspector
    ```
 
-   This will start the MCP Inspector, allowing you to debug and analyze requests. You should see:
+### Installation & Integration Notes
 
-   ```bash
-   Starting MCP inspector...
-   Proxy server listening on port 3000
+**If `npm install -g` misbehaves:**
 
-   MCP Inspector is up and running at http://localhost:5173
-   ```
+- *Permission errors (`EACCES`) on global install* — don't `sudo`. Either skip
+  the global install entirely and let your MCP client run `npx @tocharianou/elasticsearch-mcp`
+  (npx fetches on demand), or set a user-level prefix:
+  `npm config set prefix ~/.npm-global` and add it to your `PATH`.
+- *Slow or blocked registry* — use a mirror for the install only:
+  `npm install -g @tocharianou/elasticsearch-mcp --registry=https://registry.npmmirror.com`.
+- *Node version* — requires Node **18+** (`node --version`). Older Node fails
+  at startup with ESM/fetch errors, not at install time.
+- *`npx` cold start* — the first `npx` run downloads the package; if your MCP
+  client times out on first connect, run `npx @tocharianou/elasticsearch-mcp`
+  once in a terminal to warm the cache, then reconnect.
+- *Fully offline hosts* — use the GitHub Release tarball (Option 2) and point
+  your client at `node /path/to/dist/index.js`; nothing is fetched at runtime.
+
+**Claude Desktop** — Settings → Developer → MCP Servers → Edit Config, then add
+the JSON block shown above. Restart the app after editing; the server appears
+in the tools list of a new conversation.
+
+**Claude Code (CLI)** — register the server per-project or globally:
+
+```bash
+claude mcp add elasticsearch \
+  -e ES_URL=https://your-es:9200 -e ES_API_KEY=your-key \
+  -- npx @tocharianou/elasticsearch-mcp
+```
+
+**Any other MCP client / platform integration** — run in HTTP mode
+(`MCP_TRANSPORT=http`, see below) and point the client at `http://host:port/mcp`;
+this is the recommended shape for containerized platforms, one server instance
+per cluster connection.
+
+**Credentials hygiene** — the env vars end up in your client's config file in
+plain text. Prefer a scoped, read-only API key (see *Elasticsearch Access
+Control* below) over superuser credentials.
 
 ### Method 3: HTTP Streamable Mode (NEW in v0.3.0)
 
@@ -239,59 +301,10 @@ npx @tocharianou/elasticsearch-mcp
 - Supports both POST (JSON-RPC requests) and GET (SSE streams)
 - Compatible with any HTTP client or MCP SDK
 
-**Example HTTP client usage:**
-```javascript
-// Initialize connection
-const response = await fetch('http://localhost:3000/mcp', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    jsonrpc: '2.0',
-    method: 'initialize',
-    params: {
-      protocolVersion: '2024-11-05',
-      capabilities: {},
-      clientInfo: { name: 'my-client', version: '1.0.0' }
-    },
-    id: 1
-  })
-});
-
-const sessionId = response.headers.get('mcp-session-id');
-
-// Subsequent requests include session ID
-const toolsResponse = await fetch('http://localhost:3000/mcp', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'mcp-session-id': sessionId
-  },
-  body: JSON.stringify({
-    jsonrpc: '2.0',
-    method: 'tools/list',
-    params: {},
-    id: 2
-  })
-});
-
-// Call a tool (e.g., list_indices)
-const indicesResponse = await fetch('http://localhost:3000/mcp', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'mcp-session-id': sessionId
-  },
-  body: JSON.stringify({
-    jsonrpc: '2.0',
-    method: 'tools/call',
-    params: {
-      name: 'list_indices',
-      arguments: {}
-    },
-    id: 3
-  })
-});
-```
+Any MCP-capable client (or plain JSON-RPC over HTTP) can talk to the `/mcp`
+endpoint: initialize once, keep the returned `mcp-session-id` header on
+subsequent `tools/list` / `tools/call` requests. Use `/health` for liveness
+checks.
 
 ## Available Tools
 
@@ -299,13 +312,16 @@ const indicesResponse = await fetch('http://localhost:3000/mcp', {
 |------|-------------|-------------|
 | `list_indices` | List indices with pattern filter, health filter, sorting and token-aware summary | ES 5.x+ |
 | `get_mappings` | Get field mappings with flat/tree/raw modes, field filtering and multi-index compare | ES 5.x+ |
-| `es_search` | Full Query DSL search with auto-highlight on text/vector fields | ES 5.x+ |
+| `es_search` | Full Query DSL search with auto-highlight, plus harness field validation / auto-fix | ES 5.x+ |
+| `lookup_fields` | Find the right field names: ECS vocabulary intersected with the index's real fields | ES 5.x+ |
 | `execute_es_api` | Execute any ES REST endpoint directly (GET/POST/PUT/DELETE/HEAD) | ES 5.x+ |
 | `get_shards` | Shard info with health analysis, problem detection and recommendations | ES 5.x+ |
 | `list_data_streams` | List and analyze Data Streams with ILM info and backing index details | ES 7.9+ |
-| `esql_query` | Execute ES\|QL pipe-based queries with tabular output and parameterised support | **ES 8.11+** |
+| `esql_query` | Execute ES\|QL pipe-based queries with harness field validation and tabular output | **ES 8.11+** |
 
 > Tools not supported by your cluster version are automatically skipped at startup.
+> `es_search` and `esql_query` accept `skip_lint: true` to bypass the harness
+> validation for edge cases (e.g. runtime fields defined outside the query).
 
 ### ES|QL Query Tool (`esql_query`)
 
@@ -323,6 +339,7 @@ FROM auditbeat-* | WHERE event.action == "user_login" AND event.outcome == "fail
 - `params` — positional parameters replacing `?` placeholders (optional)
 - `include_types` — include column type info in output (optional, default `false`)
 - `break_token_rule` — bypass token limit for large results (optional, default `false`)
+- `skip_lint` — bypass harness field validation (optional, default `false`)
 
 > Automatically registered only on ES 8.11+ clusters.
 
@@ -332,9 +349,11 @@ We welcome contributions from the community! For details on how to contribute, p
 
 ## How It Works
 
-1. The MCP Client analyzes your request and determines which Elasticsearch operations are needed.
-2. The MCP server comunicate with ES.
-3. The MCP Client processes the results and presents them in a user-friendly format, including highlights, aggregation summaries, and anomaly insights.
+1. The MCP client (the AI model) decides *what* to look for and calls a tool.
+2. The harness validates the request against the live cluster — fixing what is
+   unambiguous, blocking what would fail, and translating errors into guidance.
+3. Results come back token-bounded and pre-digested (highlights, tables,
+   aggregation summaries), so long investigations stay within context limits.
 
 ## Security Analysis Examples
 
