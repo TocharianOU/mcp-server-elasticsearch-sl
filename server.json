@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.TocharianOU/elasticsearch",
-  "description": "Elasticsearch MCP Server with multi-version support (ES 5.x-9.x) and comprehensive API access",
+  "description": "Elasticsearch MCP Server with multi-version support (ES 5.x-9.x), query harness (field validation, ECS-aware lookup, actionable errors) and comprehensive API access",
   "title": "Elasticsearch",
   "websiteUrl": "https://github.com/TocharianOU/elasticsearch-mcp",
   "repository": {
     "url": "https://github.com/TocharianOU/elasticsearch-mcp",
     "source": "github"
   },
-  "version": "0.7.3",
+  "version": "0.9.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@tocharianou/elasticsearch-mcp",
-      "version": "0.7.3",
+      "version": "0.9.0",
       "transport": {
         "type": "stdio"
       },
@@ -71,7 +71,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "@tocharianou/elasticsearch-mcp",
-      "version": "0.7.3",
+      "version": "0.9.0",
       "transport": {
         "type": "streamable-http",
         "url": "http://localhost:{MCP_HTTP_PORT}/mcp"
@@ -83,7 +83,10 @@
           "isRequired": true,
           "format": "string",
           "default": "http",
-          "choices": ["stdio", "http"]
+          "choices": [
+            "stdio",
+            "http"
+          ]
         },
         {
           "name": "MCP_HTTP_PORT",
@@ -154,7 +157,10 @@
       "version": "0.7.3",
       "features": {
         "multi_version_support": "ES 5.x-9.x",
-        "transport_modes": ["stdio", "http"],
+        "transport_modes": [
+          "stdio",
+          "http"
+        ],
         "security_focused": true,
         "auto_version_detection": true
       }
