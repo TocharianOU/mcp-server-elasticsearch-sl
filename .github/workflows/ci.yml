@@ -1,0 +1,54 @@
+# CI: runs on every push / PR — build + unit tests, plus live lint tests
+# against a real Elasticsearch service container.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:   # manual trigger for the full version matrix
+  schedule:
+    - cron: "0 3 * * 1"  # weekly matrix run (Mon 03:00 UTC)
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl -s http://localhost:9200 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Unit + live lint tests
+        run: npx vitest run
+        env:
+          ES_TEST_URL: http://localhost:9200
+
+  # The full 5.x→9.x golden matrix is heavy; run it manually or weekly.
+  version-matrix:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: ./scripts/version-matrix.sh

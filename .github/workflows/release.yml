@@ -1,0 +1,50 @@
+# Release: triggered by pushing a v* tag.
+# Builds, tests, then creates a GitHub Release carrying the standalone
+# tarball + sha256/sha512 checksums (the offline install path documented in
+# the README). npm / MCP registry publishing is done manually, outside CI.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx vitest run
+
+      - name: Guard — tag must match package.json version
+        run: |
+          PKG_V=$(node -p "require('./package.json').version")
+          TAG_V="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_V" != "$TAG_V" ]; then
+            echo "package.json ($PKG_V) != tag ($TAG_V)"; exit 1
+          fi
+
+      - name: Build standalone tarball + checksums
+        run: |
+          V=$(node -p "require('./package.json').version")
+          TAR="elasticsearch-mcp-v${V}.tar.gz"
+          tar -czf "$TAR" dist assets package.json README.md LICENSE NOTICE.txt
+          shasum -a 256 "$TAR" > "$TAR.sha256"
+          shasum -a 512 "$TAR" > "$TAR.sha512"
+
+      - name: Create GitHub Release with assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            elasticsearch-mcp-v*.tar.gz
+            elasticsearch-mcp-v*.tar.gz.sha256
+            elasticsearch-mcp-v*.tar.gz.sha512
+          generate_release_notes: true
