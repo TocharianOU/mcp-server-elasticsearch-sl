@@ -36,7 +36,10 @@ jobs:
         run: |
           V=$(node -p "require('./package.json').version")
           TAR="elasticsearch-mcp-v${V}.tar.gz"
-          tar -czf "$TAR" dist assets package.json README.md LICENSE NOTICE.txt
+          # standalone package: bundles production node_modules so consumers
+          # can run `node dist/index.js` with no install step
+          npm prune --omit=dev
+          tar -czf "$TAR" dist assets node_modules package.json README.md LICENSE NOTICE.txt
           shasum -a 256 "$TAR" > "$TAR.sha256"
           shasum -a 512 "$TAR" > "$TAR.sha512"
 
