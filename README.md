@@ -16,7 +16,7 @@ This is a professional security-focused solution maintained by TocharianOU. It e
 
 ---
 
-**Note:** This solution requires a valid Elasticsearch license (trial, platinum, or enterprise) and is designed for security professionals, SOC teams, and threat analysts.
+**Note:** This solution is designed for security professionals, SOC teams, and threat analysts.
 
 Connect to your Elasticsearch data directly from any MCP Client (such as Claude Desktop) using the Model Context Protocol (MCP). Interact with your Elasticsearch security data through natural language queries for advanced threat analysis and incident response.
 
@@ -24,11 +24,8 @@ Connect to your Elasticsearch data directly from any MCP Client (such as Claude 
 ## Prerequisites
 
 * An Elasticsearch instance
-* **A valid Elasticsearch license (trial, platinum, enterprise) is required.**
 * Elasticsearch authentication credentials (API key or username/password)
 * MCP Client (e.g. Claude Desktop) or HTTP client for remote access
-
-> ⚠️ This project requires your Elasticsearch cluster to have a valid license. If you do not have a license, you can activate a trial license as shown below.
 
 ## Multi-Version Elasticsearch Support
 
@@ -449,17 +446,3 @@ This project is licensed under the Apache License 2.0.
 * Look at the terminal output for error messages.
 
 If you encounter issues, feel free to open an issue on the GitHub repository.
-
-## Running with a Trial License
-
-If your Elasticsearch cluster does not have a valid license, you can activate a 30-day trial license with the following command:
-
-```bash
-curl -X POST -u elastic:your_password \
-  -k "https://your-es-host:9200/_license/start_trial?acknowledge=true"
-```
-
-- Replace `your_password` and `your-es-host` with your actual credentials and host.
-- This will enable all features for 30 days.
-
-> **Note:** This project will not start if your cluster does not have a valid license (trial, platinum, enterprice etc.).
